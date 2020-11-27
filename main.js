@@ -1,49 +1,59 @@
 #! /usr/bin/env node
-'use strict';
+"use strict";
+var HID = require("node-hid");
 
-const fs = require('fs');
-const robot = require('robotjs');
+const robot = require("robotjs");
 
-const DEFAULT_DEVICE_PATH = '/dev/usb/hiddev0';
-const DEFAULT_KEYS = ['a', 'b', 'c'];
+const DEFAULT_KEYS = ["audio_prev", "audio_pause", "audio_next"];
 const RETRY_INTERVAL = 5 * 1000;
 
-const argv = require('yargs')
-             .array('k')
-             .alias('k', 'keys')
-             .alias('p', 'path')
-             .default('path', DEFAULT_DEVICE_PATH)
-             .default('k', [])
-             .argv;
+const argv = require("yargs")
+  .array("k")
+  .alias("k", "keys")
+  .alias("m", "vendorId")
+  .alias("p", "productId")
+  .default("vendorId", 1523)
+  .default("productId", 255)
+  .default("k", []).argv;
 
-const keyMap = DEFAULT_KEYS.map((key, i) => (argv.keys[i] || key));
-const state = [ false, false, false ];
+const keyMap = DEFAULT_KEYS.map((key, i) => argv.keys[i] || key);
+const state = [false, false, false];
 
-function updateState(index, value) {
-  const previousState = state[index];
-  const currentState = (value === 0x01);
+console.log("Current keymap:", keyMap);
+console.log(
+  `Current Product ID ${argv.productId}\nCurrent Vendor ID ${argv.vendorId}`
+);
 
-  if (previousState !== currentState) {
+let lastStateIndex = -1;
+
+function updateState(index) {
+  if (index === 0) {
+    if (lastStateIndex === -1) {
+      return;
+    }
+    const key = keyMap[lastStateIndex];
+    robot.keyToggle(key, "up");
+    state[index] = false;
+    lastStateIndex = -1;
+  } else {
+    index = index === 1 || index === 2 ? index - 1 : 2;
     const key = keyMap[index];
-    robot.keyToggle(key, currentState ? 'down' : 'up');
+    robot.keyToggle(key, "down");
+    lastStateIndex = index;
+    state[index] = true;
   }
-
-  state[index] = currentState;
 }
 
 function openFile() {
-  const stream = fs.createReadStream(argv.path);
+  var device = new HID.HID(argv.productId, argv.vendorId);
   const size = 8;
   const offset = 4;
-
-  stream.on('data', function(chunk) {
-    for (var i=0; i<chunk.length / size; i++) {
-      updateState(i, chunk[i * size + offset]);
-    }
+  device.on("data", (chunk) => {
+    updateState(chunk[0]);
   });
 
-  stream.on('error', function(err) {
-    console.log('failed to open file', err);
+  device.on("error", function (err) {
+    console.log("failed to open file", err);
     setTimeout(openFile, RETRY_INTERVAL);
   });
 }

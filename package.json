@@ -1,16 +1,16 @@
 {
-  "name": "infinity-pedal",
-  "version": "0.1.0",
-  "description": "Linux Infinity Foot Control pedal bindings (Node.js)",
+  "name": "infinity-pedal-hid",
+  "version": "0.0.1",
+  "description": "Infinity Foot Control pedal bindings with node-hid",
   "main": "main.js",
   "dependencies": {
-    "robotjs": "^0.4.7",
-    "yargs": "^8.0.2"
+    "node-hid": "^2.0.0-0",
+    "robotjs": "^0.6.0",
+    "yargs": "^16.1.1"
   },
-  "devDependencies": {},
-  "author": "OCannings",
+  "author": "Christopher Lewis",
   "license": "MIT",
   "bin": {
-    "infinity-pedal": "./main.js"
+    "infinity-pedal": "main.js"
   }
 }
