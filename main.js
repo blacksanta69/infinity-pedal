@@ -45,7 +45,7 @@ function updateState(index) {
 }
 
 function openFile() {
-  var device = new HID.HID(argv.productId, argv.vendorId);
+  var device = new HID.HID(argv.vendorId, argv.productId);
   const size = 8;
   const offset = 4;
   device.on("data", (chunk) => {
